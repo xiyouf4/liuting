@@ -5,8 +5,10 @@
 	> Created Time: 2019年08月05日 星期一 10时57分03秒
  ************************************************************************/
 #include "queue.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+
 typedef struct Node
 {
     void *data;
@@ -23,7 +25,7 @@ typedef struct Queue
 Queue *Queue_init(void)
 {
     Queue *queue = (Queue *)malloc(sizeof(Queue));
-    queue->head =(Node *)malloc(sizeof(Node));
+    queue->head = (Node *)malloc(sizeof(Node));
     queue->head->next = NULL;
     queue->end = queue->head;
     queue->size = 0;
@@ -37,20 +39,26 @@ void Queue_destory(Queue *queue, void(*dataDestory)(void *))
     q = queue->head->next;
     while(q)
     {
-        p=q;
-        q=q->next;
+        printf("%p\n", q);
+        if (q->next == NULL) {
+            exit(0);
+
+        }
+        p = q;
+        q = q->next;
+        printf("%d\n",*(int *)p->data);
         if(dataDestory)
         {
             dataDestory(p->data);
         }
         free(p);
     }
+    free(queue->head);
 }
 void Queue_push(Queue *queue, void *data)
 {
     Node *qnew = (Node*)malloc(sizeof(Node));
     qnew->data = data;
-
     qnew->next = NULL;
     queue->end->next = qnew;
     queue->end = qnew;
@@ -58,13 +66,18 @@ void Queue_push(Queue *queue, void *data)
 }
 void *Queue_pop(Queue *queue)
 {
-    void *data;
+    void *data = NULL;
     Node *p = queue->head->next;
     data = p->data;
-    queue->head = p->next;
+    queue->head->next = p->next;
+    if(queue->size == 1)
+    {
+        queue->end = queue->head;
+    }
     free(p);
     queue->size--;
     return data;
+
 }
 size_t Queue_size(Queue *queue)
 {

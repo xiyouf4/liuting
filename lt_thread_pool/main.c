@@ -12,13 +12,12 @@
 
 void sum(void *args)
 {
-    int sum=0;
+    int sum = 0;
     for (int i = 0; i < 100; i++)
     {
-        sum+=i;
-        printf("debug...");
+        sum += i;
     }
-    printf("**%d\n",sum);
+    printf("%d\n",sum);
 }
 
 int main()
@@ -31,8 +30,13 @@ int main()
     thread_pool_pushtask(pool, sum, NULL);
     thread_pool_pushtask(pool, sum, NULL);
     thread_pool_pushtask(pool, sum, NULL);
+    thread_pool_pushtask(pool, sum, NULL);
+    thread_pool_pushtask(pool, sum, NULL);
+    thread_pool_pushtask(pool, sum, NULL);
+    thread_pool_pushtask(pool, sum, NULL);
+    thread_pool_pushtask(pool, sum, NULL);
     sleep(2);
-    thread_pool_stop(pool);
+    //thread_pool_stop(pool);
     thread_pool_destroy(pool);
 
     return 0;
