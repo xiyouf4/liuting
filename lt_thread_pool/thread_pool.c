@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "queue.h"
 
 typedef struct Thread_pool
@@ -18,16 +19,16 @@ typedef struct Thread_pool
     pthread_t *threads;
     
     pthread_mutex_t mutex;
-    pthread_cond_t  cond;
+    pthread_cond_t cond;
     size_t thread_count;
     int is_start;
-}Thread_pool;
+} Thread_pool;
 
 typedef struct Task
 {
     void (*callback)(void *);
     void *args;
-}Task;
+} Task;
 
 Thread_pool *thread_pool_init(size_t thread_count)
 {
@@ -35,31 +36,27 @@ Thread_pool *thread_pool_init(size_t thread_count)
     pool->queue = Queue_init(); 
     pool->threads = (pthread_t *)malloc(sizeof(pthread_t)*thread_count);
     pool->thread_count = thread_count;
-    pthread_mutex_init (&pool->mutex, NULL);
-    pthread_cond_init (&pool->cond, NULL);
+    pthread_mutex_init(&pool->mutex, NULL);
+    pthread_cond_init(&pool->cond, NULL);
     pool->is_start = 0;
 }
+
 void thread_pool_destroy(Thread_pool *pool)
 {
-    
-    pthread_cond_broadcast(&pool->cond);
-    for(int i = 0; i < pool->thread_count; ++i)
-    {
-        pthread_join(pool->threads[i],NULL);
-    }
-
     thread_pool_stop(pool);
-    
-    Queue_destory(pool->queue,free);
-    
+    pthread_cond_broadcast(&pool->cond);
+    for(int i = 0; i < 2; ++i)
+    {
+        pthread_join(pool->threads[i], NULL);
+    }
+    Queue_destory(pool->queue, free);
     pthread_mutex_destroy(&pool->mutex);
     pthread_cond_destroy(&pool->cond);
-    
 }
 
 void *thread_work(void *args)
 {
-    Thread_pool *pool =(Thread_pool *)args;
+    Thread_pool *pool = (Thread_pool *)args;
     while(pool->is_start)
     {
         pthread_mutex_lock(&pool->mutex);
@@ -67,6 +64,11 @@ void *thread_work(void *args)
         {
             pthread_cond_wait(&pool->cond, &pool->mutex);
         
+        }
+        if(pool->is_start==0)
+        {
+            pthread_mutex_unlock(&pool->mutex);
+            pthread_exit(0);
         }
         Task *task = (Task *)Queue_pop(pool->queue);
         pthread_mutex_unlock(&pool->mutex);
@@ -77,6 +79,7 @@ void *thread_work(void *args)
         }
     }
 }
+
 void thread_pool_start(Thread_pool *pool)
 {
     if(pool->is_start)
@@ -91,7 +94,7 @@ void thread_pool_start(Thread_pool *pool)
 }
 
 
-void thread_pool_pushtask(Thread_pool *pool, void(*callback)(void *),void *args)
+void thread_pool_pushtask(Thread_pool *pool, void(*callback)(void *), void *args)
 {
     Task *task = (Task *)malloc(sizeof(task));
     task->callback = callback;
@@ -101,10 +104,12 @@ void thread_pool_pushtask(Thread_pool *pool, void(*callback)(void *),void *args)
     pthread_mutex_unlock(&pool->mutex);
     pthread_cond_signal(&pool->cond);
 }
+
 void thread_pool_stop(Thread_pool *pool)
 {
     pool->is_start = 0;
 }
+
 void thread_pool_taskcount(Thread_pool *pool)
 {
     Queue_size(pool->queue);

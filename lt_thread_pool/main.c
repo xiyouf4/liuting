@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 #include "thread_pool.h"
 
 void sum(void *args)
@@ -22,7 +23,7 @@ void sum(void *args)
 
 int main()
 {
-    Thread_pool * pool = thread_pool_init(4);
+    Thread_pool *pool = thread_pool_init(4);
     
     thread_pool_start(pool);
     thread_pool_pushtask(pool, sum, NULL);
@@ -31,12 +32,8 @@ int main()
     thread_pool_pushtask(pool, sum, NULL);
     thread_pool_pushtask(pool, sum, NULL);
     thread_pool_pushtask(pool, sum, NULL);
-    thread_pool_pushtask(pool, sum, NULL);
-    thread_pool_pushtask(pool, sum, NULL);
-    thread_pool_pushtask(pool, sum, NULL);
-    thread_pool_pushtask(pool, sum, NULL);
     sleep(2);
-    //thread_pool_stop(pool);
+    thread_pool_stop(pool);
     thread_pool_destroy(pool);
 
     return 0;

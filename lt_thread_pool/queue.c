@@ -40,10 +40,6 @@ void Queue_destory(Queue *queue, void(*dataDestory)(void *))
     while(q)
     {
         printf("%p\n", q);
-        if (q->next == NULL) {
-            exit(0);
-
-        }
         p = q;
         q = q->next;
         printf("%d\n",*(int *)p->data);
@@ -53,7 +49,7 @@ void Queue_destory(Queue *queue, void(*dataDestory)(void *))
         }
         free(p);
     }
-    free(queue->head);
+    queue->head = NULL;
 }
 void Queue_push(Queue *queue, void *data)
 {
