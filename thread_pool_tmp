@@ -1,0 +1,59 @@
+typedef struct threadpoll
+{
+    pthread_t *threads;       //工作线程列表
+    Work *tasks;              //任务队列
+
+    pthread_mutex_t mutex;    //互斥锁
+    pthread_cond_t  cond;     //条件变量
+
+    int stop;                   //标示线程池的状态
+    int thread_max_num;         //线程池允许的最大活动线程
+    int cur_task;               //任务队列当前任务数
+}Pool;
+
+
+void  initpool(...)
+{
+    给线程池的结构体分配空间malloc();
+
+    初始化互斥锁；
+    初始化条件变量；
+    初始化任务队列；
+    线程池每个线程标示分配空间；
+    线程池的状态置0；
+    任务数置0；
+    最大活动数由参数传来；
+        
+
+}
+
+void *run()
+{
+   while(线程池状态)
+   {
+        加锁保护数据；
+        若等待数据为0，则处于阻塞状态
+        销毁线程池
+        从任务队列中去任务函数；
+        解锁数据；
+        释放任务所占空间；
+   }
+}
+
+int  append(....)
+{
+        加锁保护数据；
+        任务加入任务队列；
+        唤醒线程去执行任务；
+        解锁数据；
+}   
+
+int destory()
+{
+    如果线程是stop=1状态，return ;
+    唤醒所有线程；
+    主线程等待所有线程结束；
+    销毁等待队列；
+    销毁互斥锁和条件变量；
+    释放线程池；
+}

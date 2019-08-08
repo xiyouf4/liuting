@@ -13,14 +13,14 @@ typedef struct Node
 {
     void *data;
     struct Node *next;
-}Node;
+} Node;
 
 typedef struct Queue
 {
     Node *head;
     Node *end;
     size_t size;
-}Queue;
+} Queue;
 
 Queue *Queue_init(void)
 {
@@ -39,16 +39,14 @@ void Queue_destory(Queue *queue, void(*dataDestory)(void *))
     q = queue->head->next;
     while(q)
     {
-        printf("%p\n", q);
         p = q;
         q = q->next;
-        printf("%d\n",*(int *)p->data);
-        if(dataDestory)
-        {
+        if(dataDestory) {
             dataDestory(p->data);
         }
         free(p);
     }
+    free(queue->head);
     queue->head = NULL;
 }
 void Queue_push(Queue *queue, void *data)
@@ -63,14 +61,18 @@ void Queue_push(Queue *queue, void *data)
 void *Queue_pop(Queue *queue)
 {
     void *data = NULL;
-    Node *p = queue->head->next;
-    data = p->data;
-    queue->head->next = p->next;
-    if(queue->size == 1)
-    {
+    if (queue->size == 1) {
+        data = queue->head->next->data;
+        free(queue->head->next);
         queue->end = queue->head;
+        queue->head->next = NULL;
     }
-    free(p);
+    if (queue->size > 1) {
+        Node *p = queue->head->next;
+        data = p->data;
+        queue->head->next = p->next;
+        free(p);
+    }
     queue->size--;
     return data;
 

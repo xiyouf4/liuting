@@ -45,8 +45,7 @@ void thread_pool_destroy(Thread_pool *pool)
 {
     thread_pool_stop(pool);
     pthread_cond_broadcast(&pool->cond);
-    for(int i = 0; i < 2; ++i)
-    {
+    for (int i = 0; i < 2; ++i) {
         pthread_join(pool->threads[i], NULL);
     }
     Queue_destory(pool->queue, free);
@@ -57,23 +56,19 @@ void thread_pool_destroy(Thread_pool *pool)
 void *thread_work(void *args)
 {
     Thread_pool *pool = (Thread_pool *)args;
-    while(pool->is_start)
-    {
+    while (pool->is_start) {
         pthread_mutex_lock(&pool->mutex);
-        while(Queue_size(pool->queue) < 1 && pool->is_start)
-        {
+        while (Queue_size(pool->queue) < 1 && pool->is_start) {
             pthread_cond_wait(&pool->cond, &pool->mutex);
         
         }
-        if(pool->is_start==0)
-        {
+        if (pool->is_start == 0) {
             pthread_mutex_unlock(&pool->mutex);
             pthread_exit(0);
         }
         Task *task = (Task *)Queue_pop(pool->queue);
         pthread_mutex_unlock(&pool->mutex);
-        if(task &&  task->callback)
-        {
+        if (task &&  task->callback) {
             task->callback(task->args);
             free(task);
         }
@@ -82,13 +77,11 @@ void *thread_work(void *args)
 
 void thread_pool_start(Thread_pool *pool)
 {
-    if(pool->is_start)
-    {
+    if (pool->is_start) {
         return ;
     }
     pool->is_start = 1;
-    for(int i = 0; i < pool->thread_count; i++)
-    {
+    for (int i = 0; i < pool->thread_count; i++) {
         pthread_create(&(pool->threads[i]), NULL, thread_work, (void *)pool);
     }
 }
