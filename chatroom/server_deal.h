@@ -1,10 +1,9 @@
 /*************************************************************************
-	> File Name: mysql.h
+	> File Name: server_deal.h
 	> Author: 
 	> Mail: 
-	> Created Time: 2019年08月07日 星期三 09时03分15秒
+	> Created Time: 2019年08月08日 星期四 16时18分40秒
  ************************************************************************/
 
-#ifndef _MYSQL_H
-#define _MYSQL_H
-#endif
+void recv_PACK(int);
+
