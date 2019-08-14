@@ -10,5 +10,13 @@
 int send_login_PACK(int conn_fd);
 int send_regist_PACK(int conn_fd);
 int send_repasswd_PACK(int conn_fd);
+void send_exit_PACK();
+void send_addfriend_PACK();
+void send_list_fri();
+void send_online_fri();
+
 void *recv_PACK();
+void recv_ADDFR_();
+
+int getch();
 #endif

@@ -12,4 +12,8 @@ void MYSQL_init();
 int MYSQL_login(int, char *, int);
 int MYSQL_regist(char *, char *);
 int MYSQL_repass(int ,char *, char *);
+int MYSQL_exit(int);
+int MYSQL_addfriend(int);
+int MYSQL_addfriend_store(int, int);
+int MYSQL_list_fri(int);
 #endif
