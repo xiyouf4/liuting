@@ -1,3 +1,4 @@
+
 main : server.o server_init.o server_deal.o MYSQL.o
 	gcc server.o server_init.o  server_deal.o MYSQL.o -o main -L/usr/lib/mysql -lmysqlclient
  

@@ -36,8 +36,8 @@ char main_menu()
     char choice;
     do {
         printf("\n\t\t***************************\n");
-        printf("\t\t*        a.  在线好友       *\n");
-        printf("\t\t*        b.  全部好友       *\n");
+        printf("\t\t*        a.  全部好友       *\n");
+        printf("\t\t*        b.  在线好友       *\n");
         printf("\t\t*        c.  添加好友       *\n");
         printf("\t\t*        d.  删除好友       *\n");
         printf("\t\t*        e.  群聊信息       *\n");
@@ -46,11 +46,12 @@ char main_menu()
         printf("\t\t*        h.  退出群聊       *\n");
         printf("\t\t*        i.  删除群聊       *\n");
         printf("\t\t*        j.  好友聊天       *\n");
-        printf("\t\t*        k. 群组聊天       *\n");
-        printf("\t\t*        l. 发送文件       *\n");
-        printf("\t\t*        l.  好友申请       *\n");
+        printf("\t\t*        k.  群组聊天       *\n");
+        printf("\t\t*        l.  发送文件       *\n");
+        printf("\t\t*        m.  好友申请       *\n");
+        printf("\t\t*        n.  聊天盒子       *\n");
         //printf("\t\t*     .file message box %d  *\n",m_recv_num_file_mes);
-        printf("\t\t*        d. 聊天记录       *\n");
+        printf("\t\t*        o.  聊天记录       *\n");
         printf("\t\t*        0.  退出           *\n");
         printf("\t\t****************************\n");
         choice = getch();
@@ -61,6 +62,7 @@ char main_menu()
 void  main_login(int cli_fd)
 {
     char choice;
+    int ret;
     choice = login_menu();
      pthread_t recv_tin;
     switch (choice){
@@ -75,14 +77,8 @@ void  main_login(int cli_fd)
         }
         break;
     case '2':
-        if (send_regist_PACK(cli_fd) == 0) {
-            main_login(cli_fd);
-            printf("注册成功,可以登录哟！！！\n");
-        }
-        else {
-            main_login(cli_fd);
-            printf("注册失败，请重新注册呀!!\n");
-        }
+        send_regist_PACK(cli_fd);
+        main_login(cli_fd);
         break;
     case '3':
         if (send_repasswd_PACK(cli_fd) == 0) {
@@ -93,8 +89,12 @@ void  main_login(int cli_fd)
             main_login(cli_fd);
             printf("修改失败！！\n");
         }
-    default:
+    case '0':
         exit(0);
+    default :
+        printf("小傻逼你好好输!!!\n");
+        getch();
+        main_login(cli_fd);
     }
 
 }
@@ -108,13 +108,30 @@ void deal(char choice)
             exit(0);
         case 'a':
             send_list_fri();
+            break;
         case 'b':
             send_online_fri();
+            break;
         case 'c':
             send_addfriend_PACK();
             break;
-        case 'l':
+        case 'd':
+            send_dele_fri();
+            break;
+        case 'j':
+            send_chat_fri();
+            break;
+        case 'm':
             recv_ADDFR_();
+            break;
+        case 'n':
+            recv_chat_fri();
+            break;
+        case 'o':
+            send_store_chat();
+            break;
     }
 }
+
+
 

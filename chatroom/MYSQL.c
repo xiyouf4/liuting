@@ -5,10 +5,12 @@
 	> Created Time: 2019年08月07日 星期三 09时02分57秒
  ************************************************************************/
 
+#include "dfi.h"
 #include <stdio.h>
 #include <mysql/mysql.h>
 #include <stdlib.h>
 #include <string.h>
+
 
 MYSQL mysql;
 MYSQL_RES  *result=NULL;
@@ -145,7 +147,7 @@ int MYSQL_exit(int account)
     }
      
 }
-int MYSQL_addfriend(int sned_account, int account)
+int MYSQL_find_fd(int account)
 {
     int ret; 
     int send_cli_fd;
@@ -200,33 +202,143 @@ int MYSQL_addfriend_store(int account, int send_account)
      }
 }
 
-int MYSQL_list_fri(int account)
+fri MYSQL_list_fri(int account)
 {
-    MYSQL_init();
-     int ret; 
+    //MYSQL_init();
+    int ret; 
     int send_cli_fd;
     char buff[1000];
+    fri p;
+    int i = 0;
 
     sprintf(buff,"select * from friends where id1 = %d",account);
     ret = mysql_query(&mysql, buff);
     if (!ret) {
         result = mysql_store_result(&mysql);    //返回查询结果
         if (!result) {
-            perror("addfriend:mysql_store_result");
+            perror("list_friend:mysql_store_result");
         }
         while (row=mysql_fetch_row(result)) {
-            char tmp[20];
-            if(atoi(row[3])==0) {
-                return -1;
-            }
-            else {
-               send_cli_fd = atoi(row[4]);
-            }
-            
-            mysql_free_result(result);
-            mysql_close(&mysql);
-            return send_cli_fd;
+            p.account[i] = atoi(row[1]);
+            printf("%d\n",p.account[i]);
+            i++;
         }
     }
-    return -1;
+    p.len = i;
+    printf("%d\n",p.len);
+    for(i = 0; i < p.len; i++)
+    {
+        sprintf(buff,"select * from user where id = %d",p.account[i]);
+        printf("%s\n",buff);
+        ret = mysql_query(&mysql, buff);
+        if (!ret) {
+            result = mysql_store_result(&mysql);    //返回查询结果
+            if (!result) {
+                perror("list_friend:mysql_store_result");
+            }
+            while (row=mysql_fetch_row(result)) {
+                strcpy(p.name[i] , row[1]);
+                printf("%s\n",row[1]);
+            }
+        }
+    }
+    return p;
+}
+
+fri MYSQL_online_fri(int account)
+{
+    //MYSQL_init();
+    int ret;
+    int send_cli_fd;
+    char buff[1000];
+    fri p;
+    int i = 0;
+
+    sprintf(buff,"select * from friends where id1 = %d",account);
+    ret = mysql_query(&mysql, buff);
+    if (!ret) {
+        result = mysql_store_result(&mysql);    //返回查询结果
+        if (!result) {
+            perror("list_friend:mysql_store_result");
+        }
+        while (row=mysql_fetch_row(result)) {
+            p.account[i] = atoi(row[1]);
+            printf("%d\n",p.account[i]);
+            i++;
+        }
+    }
+    p.len = i;
+    printf("%d\n",p.len);
+    for(i = 0; i < p.len; i++)
+    {
+        sprintf(buff,"select * from user where id = %d,online = 1",p.account[i]);
+        printf("%s\n",buff);
+        ret = mysql_query(&mysql, buff);
+        if (!ret) {
+            result = mysql_store_result(&mysql);    //返回查询结果
+            if (!result) {
+                perror("list_friend:mysql_store_result");
+            }
+            while (row=mysql_fetch_row(result)) {
+                strcpy(p.name[i] , row[1]);
+            }
+        }
+        else {
+            p.account[i] = 0;
+        }
+    }
+    return p;
+}
+
+int MYSQL_store_chat(int account, int send_account, char *mes)
+{
+    MYSQL_init();
+    int ret;
+    char buff[1000];
+    sprintf(buff, "insert into chat_fri (id1,id2,mes)values (%d,%d,'%s')", account,send_account,mes);//连接两个字符串
+    ret = mysql_query(&mysql,buff);
+    if (!ret) {
+        mysql_close(&mysql);
+        return 0;
+    }  
+    else {
+        mysql_close(&mysql);
+        return -1;
+     }
+}
+
+STR MYSQL_find_chat(int account, int send_account)
+{
+    int ret;
+    char buff[1000];
+    STR str;
+    int i=0;
+    sprintf(buff,"select * from chat_fri where (id1 = %d and id2 = %d) or (id1 =%d and id2 = %d)",account,send_account,send_account,account);
+    ret = mysql_query(&mysql, buff);
+    if (!ret) {
+        result = mysql_store_result(&mysql);    //返回查询结果
+        if (!result) {
+            perror("list_friend:mysql_store_result");
+        }
+        while (row=mysql_fetch_row(result)) {
+            str.account[i] = atoi(row[0]);
+            str.send_account[i] = atoi(row[1]);
+            strcpy(str.mes[i], row[2]);
+            i++;
+        }
+        str.len = i > 0 ? i : 0;
+    }
+    else {
+        str.account[0] = -1;
+    }
+    return str;
+}
+
+int MYSQL_dele_fri(int account,int send_account)
+{
+    char buff[1000];
+    sprintf(buff,"delete from friends where (id1 = %d and id2 = %d) or (id1 =%d and id2 = %d)",account,send_account, send_account, account);
+    printf("%s\n",buff);
+    mysql_query(&mysql, buff);
+    return 0;
 }

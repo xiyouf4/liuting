@@ -8,15 +8,19 @@
 #ifndef _CLIENT_IO_H
 #define _CLIENT_IO_H
 int send_login_PACK(int conn_fd);
-int send_regist_PACK(int conn_fd);
+void send_regist_PACK(int conn_fd);
 int send_repasswd_PACK(int conn_fd);
 void send_exit_PACK();
 void send_addfriend_PACK();
-void send_list_fri();
-void send_online_fri();
+int send_list_fri();
+int send_online_fri();
+void send_chat_fri();
+void send_store_chat();
+void send_dele_fri();
 
 void *recv_PACK();
 void recv_ADDFR_();
+void recv_chat_fri();
 
 int getch();
 #endif
