@@ -8,6 +8,6 @@ server_init.o : server_init.c server_deal.h MYSQL.h
 	gcc -c server_init.c
 server_deal.o : server_deal.c MYSQL.h
 	gcc -c server_deal.c
-MYSQL.o : MYSQL.c
+MYSQL.o : MYSQL.c dfi.h
 	gcc -c MYSQL.c 
 

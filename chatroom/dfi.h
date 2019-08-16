@@ -16,6 +16,12 @@
 #define CHAT_FRI   7
 #define STORE_CHAT 8
 #define DELE_FRI   9
+#define CREAT_GROUP 10
+#define JOIN_GROUP  11
+#define QUIT_GROUP  12
+#define DELE_GROUP  13
+#define GROUP_MES   14
+#define CHAT_GROUP  15
 
 typedef struct package {
     int  type;
@@ -27,16 +33,25 @@ typedef struct package {
     char mes2[1000];
 } PACK;
 
-typedef struct friends {
+typedef struct friends {  //好友列表
     int  account[200];
     char name[200][100];
-    char online[200];
+    int online[200];
     int  len;
 }fri;
 
-typedef struct store_chat {
+typedef struct store_chat { //私聊记录
     int account[1000];
     int send_account[1000];
     char mes[1000][1000];
     int len;
 }STR;
+
+typedef struct group {  //群信息
+    int account[200];
+    char name[200][100];
+    int online[200];
+    int cli_fd[200];
+    int flag[200];
+    int len;
+}GROUP;

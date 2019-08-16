@@ -17,10 +17,17 @@ int send_online_fri();
 void send_chat_fri();
 void send_store_chat();
 void send_dele_fri();
+void send_creat_group();
+void send_join_group();
+void send_quit_group();
+void send_dele_group();
+void send_group_mes();
+void send_chat_group();
 
 void *recv_PACK();
 void recv_ADDFR_();
 void recv_chat_fri();
+void recv_chat_group();
 
 int getch();
 #endif

@@ -49,13 +49,16 @@ char main_menu()
         printf("\t\t*        k.  群组聊天       *\n");
         printf("\t\t*        l.  发送文件       *\n");
         printf("\t\t*        m.  好友申请       *\n");
-        printf("\t\t*        n.  聊天盒子       *\n");
+        printf("\t\t*        n.  私聊盒子       *\n");
+        printf("\t\t*        o.  群聊盒子       *\n");
         //printf("\t\t*     .file message box %d  *\n",m_recv_num_file_mes);
-        printf("\t\t*        o.  聊天记录       *\n");
+        printf("\t\t*        p.  聊天记录       *\n");
         printf("\t\t*        0.  退出           *\n");
         printf("\t\t****************************\n");
         choice = getch();
         deal(choice);
+        printf("按任意键返回主菜单\n");
+        getch();
     }while(1);
 } 
 
@@ -118,8 +121,26 @@ void deal(char choice)
         case 'd':
             send_dele_fri();
             break;
+        case 'e':
+            send_group_mes();
+            break;
+        case 'f':
+            send_creat_group();
+            break;
+        case 'g':
+            send_join_group();
+            break;
+        case 'h':
+            send_quit_group();
+            break;
+        case 'i':
+            send_dele_group();
+            break;
         case 'j':
             send_chat_fri();
+            break;
+        case 'k':
+            send_chat_group();
             break;
         case 'm':
             recv_ADDFR_();
@@ -128,6 +149,9 @@ void deal(char choice)
             recv_chat_fri();
             break;
         case 'o':
+            recv_chat_group();
+            break;
+        case 'p':
             send_store_chat();
             break;
     }
