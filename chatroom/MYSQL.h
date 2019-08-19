@@ -30,3 +30,7 @@ int MYSQL_dele_group(int);
 char * MYSQL_group_name(int);
 GROUP MYSQL_group_mes(int);
 GROUP MYSQL_find_user(GROUP);
+int MYSQL_store_group(int, int, char *);
+STR_G MYSQL_find_chat_group(int);
+int MYSQL_set_up(int ,int);
+int MYSQL_find_group_vip(int,int);

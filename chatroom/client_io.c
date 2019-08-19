@@ -9,14 +9,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <termios.h>
-
+#include <sys/stat.h>
+#include <fcntl.h>
 
 int cli_fd;
 int account;
 int send_account;
+pthread_mutex_t mutex;
+pthread_cond_t cond;
+int send_sum = 0;
+int recv_sum = 0;
 
 void recv_ADDFR_mess(PACK);
 void recv_ADDFR_();
+void recv_ADDFR(PACK);
 void recv_CHAT_FRI(PACK);
 void recv_store_chat();
 void recv_list_fri();
@@ -28,9 +34,14 @@ void recv_dele_group(PACK);
 void recv_group_mes(PACK);
 void recv_CHAT_GROUP(PACK);
 void recv_CHAT_FRI(PACK);
+void recv_store_group(PACK);
+void recv_set_up(PACK);
+void recv_file(PACK);
+void recv_dele_user(PACK);
+void recv_join_user(PACK);
 
 int getch()
-{
+{ 
 	struct termios oldt, newt;
 	int ch;
 	tcgetattr(STDIN_FILENO, &oldt);
@@ -42,7 +53,43 @@ int getch()
 
 	return ch;
 }
+#include <ctype.h>
 
+#define MAX_PASSWD_LEN 16
+
+char password[MAX_PASSWD_LEN + 1] = "";
+
+void GetPasswd()
+{    
+    struct termios old,new;
+
+	char ch;
+	int  i = 0;
+
+	tcgetattr(0,&old);
+	new = old;
+
+	new.c_lflag &= ~(ECHO | ICANON);
+    memset(password, 0 , sizeof(password));
+	while(1)
+	{
+		tcsetattr(0,TCSANOW,&new);
+
+		scanf("%c",&ch);
+
+		tcsetattr(0,TCSANOW,&old);
+
+		if(i == 8 || ch == '\n')
+		{
+			break;
+		}
+
+		password[i] = ch;
+		printf("*");
+
+		i++;
+	}
+}
 int recv_deal_PACK()
 {
     PACK pack;
@@ -50,7 +97,6 @@ int recv_deal_PACK()
         int ret;
         memset(&pack, 0, sizeof(PACK));
         if((ret = recv(cli_fd, &pack,sizeof(PACK), 0))>0) {
-            printf("@@\n");
             if(pack.type == 0) {
                 return 0;
             }
@@ -70,10 +116,12 @@ int send_login_PACK(int conn_fd)
 
     printf("请输入你的账号：");
     scanf("%d",&pack.account);
+    getchar();
     account = pack.account;
     printf("请输入你的密码：");
-    scanf("%s",pack.mes);
-    getchar();    
+    GetPasswd();
+    strcpy(pack.mes,password);
+
     if(send(conn_fd, &pack, sizeof(PACK),0)<0){
         perror("send");
     }
@@ -98,9 +146,10 @@ void send_regist_PACK(int conn_fd)
 
     printf("请输入你的昵称：");
     scanf("%s",pack.mes);
+    getchar();
     printf("请输入你的密码：");
-    scanf("%s",pack.mes2);
-    //getchar();
+    GetPasswd();
+    strcpy(pack.mes2,password);
     if(send(conn_fd, &pack, sizeof(PACK),0)<0){
         perror("send");
     }
@@ -109,7 +158,7 @@ void send_regist_PACK(int conn_fd)
         memset(&pack, 0, sizeof(PACK));
         if((ret = recv(conn_fd, &pack,sizeof(PACK), 0))>0) {
             if(pack.type == 0) {
-                printf("注册成功，您的账号为%d\n",pack.account);
+                printf("\n注册成功，您的账号为%d\n",pack.account);
                 return;
             }
             else {
@@ -125,11 +174,13 @@ int send_repasswd_PACK(int conn_fd)
 
     printf("请输入你的账号：");
     scanf("%d",&pack.account);
-    printf("请输入你的旧密码：");
-    scanf("%s",pack.mes);
-    printf("请输入你的新密码：");
-    scanf("%s",pack.mes2);
     getchar();
+    printf("请输入你的旧密码：");
+    GetPasswd();
+    strcpy(pack.mes,password);
+    printf("请输入你的新密码：");
+    GetPasswd();
+    strcpy(pack.mes2,password);
     if(send(conn_fd, &pack, sizeof(PACK),0)<0){
         perror("send");
     }
@@ -165,6 +216,10 @@ void send_addfriend_PACK()
     pack.account = account;
     printf("请输入要添加的账号：");
     scanf("%d",&pack.send_account);
+    if(account == pack.send_account) {
+        printf("你是傻逼吗，自己还能加自己好友!!!\n");
+        return;
+    }
     getchar();
     if(send(cli_fd,&pack,sizeof(PACK),0)<0) {
         perror("send_addfriend_PACK");
@@ -324,14 +379,92 @@ void send_chat_group()
     send_account = 0;
 }
 
+void send_find_store_g()
+{
+    PACK pack;
+    pack.type = STORE_G;
+    printf("请输入你要查询的群号：");
+    scanf("%d",&pack.send_account);
+    getchar();
+    if(send(cli_fd, &pack, sizeof(PACK), 0) <0) {
+        perror("send_file_store_g");
+    }
+}
+
+void send_set_up()
+{
+    PACK pack;
+    pack.type = SET_UP;
+    pack.account = account;
+    printf("请输入你要设置的群号：");
+    scanf("%d",&pack.send_account);
+    printf("请输入你要设置管理员的账号：");
+    scanf("%s",pack.mes);
+    getchar();
+    if(send(cli_fd, &pack, sizeof(PACK), 0)< 0) {
+        perror("send_set_up");
+    }
+}
+
+void send_join_user()
+{
+    PACK pack;
+    pack.type  = JOIN_USER;
+    pack.account = account;
+    printf("请输入你要操作的群号：");
+    scanf("%d",&pack.send_account);
+    printf("请输入要拉的用户名：");
+    scanf("%s",pack.mes);
+    getchar();
+    if(send(cli_fd, &pack, sizeof(PACK), 0)< 0) {
+        perror("send_set_up");
+    }
+    
+}
+
+
+void send_dele_user()
+{
+    PACK pack;
+    pack.type =  DELE_USER;
+    pack.account = account;
+    printf("请输入你要操作的群号：");
+    scanf("%d",&pack.send_account);
+    printf("请输入要删的用户名：");
+    scanf("%s",pack.mes);
+    getchar();
+    if(send(cli_fd, &pack, sizeof(PACK), 0)< 0) {
+        perror("send_set_up");
+    }
+}
 void *recv_PACK()
 {
     PACK pack;
+    int ret = 0;
+    int sum = sizeof(pack);
     while (1) {
-        if ((recv(cli_fd, &pack,sizeof(PACK), 0))>0) {
+        char *str =(char*)&pack;
+        while ((ret = recv(cli_fd, str,sum, 0))) {
+            if(sum > 0) {
+                sum -= ret;
+                str += ret;
+                printf("inside sum = %d  pack size :%d\n",sum,sizeof(pack));
+                continue;
+            }
+
+            else {
+                printf("aaaaaaaaaaaaaaout\n");
+                break;
+            }
+        }
+        printf("pack.mes:%d\n",sizeof(pack.mes));
+        printf("sum = %d\n",sum);
             switch (pack.type) {
                 case ADD_FRIEND:
                         recv_ADDFR_mess(pack);
+                        break;
+                case 41:
+                        recv_ADDFR(pack);
                         break;
                 case CHAT_FRI:
                         recv_CHAT_FRI(pack);
@@ -363,8 +496,27 @@ void *recv_PACK()
                 case CHAT_GROUP:
                         recv_CHAT_GROUP(pack);
                         break;
+                case STORE_G:
+                        recv_store_group(pack);
+                        break;
+                case SET_UP:
+                        recv_set_up(pack);
+                        break;
+                case SEND_FILE:
+                        //pthread_mutex_lock(&mutex);
+                        //pthread_cond_signal(&cond);
+                        //pthread_mutex_unlock(&mutex);
+                        //break;
+                        //case OK_FILE:
+                        recv_file(pack);
+                        break;
+                case JOIN_USER:
+                        recv_join_user(pack);
+                        break;
+                case DELE_USER:
+                        recv_join_user(pack);
+                        break;
             }
-        }
     }
 }
 
@@ -415,11 +567,10 @@ void recv_ADDFR_()
         char a = getch();
         memset(&pack, 0, sizeof(PACK)); 
         pack.type = 41;
+        pack.account = account;
+        pack.send_account = p->send_account;
         if (a == 'y' || a == 'Y') {
             strcpy(pack.mes, "success");
-            printf("%s\n",pack.mes);
-            pack.account = account;
-            pack.send_account = p->send_account;
             if(send(cli_fd, &pack, sizeof(PACK),0)<0){
                 perror("send");
             }
@@ -514,7 +665,7 @@ void recv_list_fri()
         if(recv(cli_fd, &p,sizeof(fri), 0)>0) {
             for(int i = 0; i < p.len; i++) {
                 printf("account:%d  ",p.account[i]);
-                printf("昵称:%s\n",p.name);
+                printf("昵称:%s\n",p.name[i]);
             }
             return ;
         }
@@ -531,7 +682,7 @@ void recv_online_fri()
             for(int i = 0; i < p.len; i++) {
                 if(p.account[i] != 0) {
                     printf("account:%d  ",p.account[i]);
-                    printf("昵称:%s\n",p.name);
+                    printf("昵称:%s\n",p.name[i]);
                 }
             }
             return ;
@@ -546,6 +697,10 @@ void recv_creat_group(PACK pack)
 
 }
 
+void recv_ADDFR(PACK pack)
+{
+    printf("%s\n",pack.mes);
+}
 void recv_join_group(PACK pack)
 {
     printf("%s\n",pack.mes);
@@ -563,7 +718,7 @@ void recv_dele_group(PACK pack)
 
 void recv_group_mes(PACK pack)
 {
-    printf("**群名称%s\n",pack.mes);
+    printf("群名称%s\n",pack.mes);
     GROUP p;
     while(1) {
         memset(&p, 0, sizeof(GROUP));
@@ -571,7 +726,7 @@ void recv_group_mes(PACK pack)
             for(int i = 0; i < p.len; i++) {
                 if(p.account[i] != 0) {
                     printf("群员account:%d\t",p.account[i]);
-                    printf("群员名称:%s\t",p.name);
+                    printf("群员名称:%s\t",p.name[i]);
                     if(p.online[i]== 1) {
                         printf("在线\t");
                     }
@@ -605,10 +760,15 @@ chatG *ghead,*gend;
 
 void recv_CHAT_GROUP(PACK pack)
 {
-    if (pack.account == send_account) {
+    if(pack.account == account) {
+        printf("%s\n",pack.mes);
+        return ;
+    }
+    else if (pack.account == send_account) {
         printf("群聊名称：%s\t",pack.send_name);
         printf("群成员名称：%s\t",pack.mes);
         printf("信息：%s\n" ,pack.mes2); 
+        return ;
     }
     else {
         if (ghead == NULL) {
@@ -649,3 +809,104 @@ void recv_chat_group()
     ghead = NULL;
 }
 
+void recv_store_group(PACK pack)
+{
+    if(strcmp(pack.mes ,"success")!= 0)
+    {
+        printf("%s\n",pack.mes);
+    }
+    else {
+        while(1) {
+            int ret;
+            STR_G p;
+            if(recv(cli_fd, &p,sizeof(STR_G), 0)>0) {
+                for(int i = 0; i < p.len; i++) {
+                    if(p.usr_account[i] != 0) {
+                        printf("account:%d  ",p.usr_account[i]);
+                        printf("信息:%s\n",p.mes[i]);
+                    }
+                }
+            return ;
+        }
+        }
+    }
+}
+
+void recv_set_up(PACK pack)
+{
+    printf("%s\n",pack.mes);
+}
+
+void send_file()
+{
+    PACK pack;
+    char path[1000];
+    struct stat buf;
+    int fd;
+    int ret;
+
+    memset(&pack, 0, sizeof(PACK));
+    pack.type = SEND_FILE;
+    pack.account = account;
+    printf("请输入要发送的好友账号：");
+    scanf("%d",&pack.send_account);
+    send_account = pack.send_account;
+    printf("请输入文件的绝对路径：");
+    scanf("%s",path);
+    if(lstat(path, &buf) == -1) {
+        printf("你输入的文件路径不正确\n");
+    }
+    if( S_ISDIR(buf.st_mode)) {
+        printf("你输入的是一个目录，好好输呀！！！");
+    }
+    else {
+        if ((fd = open(path, O_RDONLY)) == -1) {
+            perror("open");
+        }
+        while ((ret = read(fd,pack.mes, sizeof(pack.mes))) > 0) {
+            if(send(cli_fd, &pack, sizeof(PACK), 0) < 0) {
+                perror("send_file_buf");
+            }
+            //pthread_mutex_lock(&mutex);
+            //pthread_cond_wait(&cond, &mutex);
+            //pthread_mutex_unlock(&mutex);
+            memset(&pack, 0, sizeof(PACK));
+            pack.type = SEND_FILE;
+            pack.send_account = send_account;
+            pack.account =account;
+            send_sum += ret;
+            printf("send_ret:%d\n",ret);
+            
+       }
+        if(ret < 999) {
+                printf("%d\n",send_sum);
+            }
+       
+    }
+        close(fd);
+        
+    }
+
+void recv_file(PACK pack)
+{
+    PACK send_pack;
+    int fd;
+    if( (fd = open("/home/lt/test/test", O_RDWR|O_CREAT|O_APPEND, S_IRUSR| S_IWUSR)) == -1) {
+        perror("open");
+    }
+    int ret;
+    if( (ret = write(fd, pack.mes, strlen(pack.mes))) < 0) {
+        perror("write");
+    }
+    printf("write ret: %d\n",ret);
+    recv_sum += ret;
+    if( ret < 1000) {
+        printf("recvnum :%d\n",recv_sum);
+    }
+    close(fd);
+}
+
+void recv_join_user(PACK pack)
+{
+    printf("%s\n",pack.mes);
+}

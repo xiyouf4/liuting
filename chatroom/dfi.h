@@ -22,6 +22,12 @@
 #define DELE_GROUP  13
 #define GROUP_MES   14
 #define CHAT_GROUP  15
+#define STORE_G     16
+#define SET_UP      17
+#define SEND_FILE   18
+#define OK_FILE     19
+#define JOIN_USER   20
+#define DELE_USER   21
 
 typedef struct package {
     int  type;
@@ -55,3 +61,10 @@ typedef struct group {  //群信息
     int flag[200];
     int len;
 }GROUP;
+
+typedef struct store_group {
+    int usr_account[1000];
+    char use_name[1000][100];
+    char mes[1000][1000];
+    int len;
+}STR_G;

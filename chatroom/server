@@ -1,6 +1,6 @@
 
 main : server.o server_init.o server_deal.o MYSQL.o
-	gcc server.o server_init.o  server_deal.o MYSQL.o -o main -L/usr/lib/mysql -lmysqlclient
+	gcc server.o server_init.o  server_deal.o MYSQL.o -o main -L/usr/lib/mysql -lmysqlclient -lpthread
  
 server.o : server.c server_init.h
 	gcc -c server.c server_init.h
